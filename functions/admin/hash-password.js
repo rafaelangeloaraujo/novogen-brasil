@@ -1,4 +1,50 @@
-import { hashPassword, htmlResponse, jsonResponse } from "./_shared.js";
+function htmlResponse(html, init = {}) {
+  return new Response(html, {
+    status: init.status || 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store"
+    }
+  });
+}
+
+function jsonResponse(data) {
+  return new Response(JSON.stringify(data), {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store"
+    }
+  });
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+async function hashPassword(password, iterations = 210000) {
+  const salt = new Uint8Array(16);
+  crypto.getRandomValues(salt);
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+    key,
+    256
+  );
+
+  return `pbkdf2_sha256$${iterations}$${bytesToBase64(salt)}$${bytesToBase64(new Uint8Array(bits))}`;
+}
 
 function formPage(result = "") {
   return `<!doctype html>
@@ -48,6 +94,7 @@ export async function onRequestPost({ request, env }) {
 
   const form = await request.formData();
   const password = String(form.get("password") || "");
+
   if (password.length < 12) {
     return htmlResponse(formPage("Use uma senha com pelo menos 12 caracteres."), { status: 422 });
   }
