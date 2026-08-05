@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /source/
+
+Sitemap: https://www.novogen.com.br/sitemap.xml

@@ -1,0 +1,8 @@
+name = "novogen-brasil"
+compatibility_date = "2026-08-05"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "novogen-brasil-db"
+database_id = "5e554171-3ec6-4316-a86a-02e9fa1a053f"

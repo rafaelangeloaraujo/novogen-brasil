@@ -1,0 +1,443 @@
+:root {
+  --ink: #081421;
+  --deep: #05111f;
+  --blue: #006aa5;
+  --cyan: #00a8c7;
+  --orange: #f58220;
+  --paper: #f4f7fa;
+  --white: #ffffff;
+  --muted: #667789;
+  --line: rgba(8, 20, 33, 0.12);
+  --shadow: 0 22px 62px rgba(8, 20, 33, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.admin-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 14px clamp(18px, 4vw, 46px);
+  color: var(--white);
+  background: rgba(5, 17, 31, 0.98);
+  box-shadow: 0 14px 40px rgba(8, 20, 33, 0.18);
+}
+
+.admin-brand img {
+  width: 150px;
+}
+
+.admin-topbar span,
+.sidebar-title span,
+.panel-heading p {
+  display: block;
+  margin: 0 0 3px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-topbar strong {
+  font-size: 1.02rem;
+}
+
+.admin-actions,
+.tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.primary-button,
+.ghost-button,
+.tool-actions button,
+.file-button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 15px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.primary-button {
+  color: var(--ink);
+  background: linear-gradient(135deg, #ffc247, var(--orange));
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(135deg, rgba(5, 17, 31, 0.96), rgba(8, 50, 74, 0.9)),
+    radial-gradient(circle at 78% 18%, rgba(0, 168, 199, 0.34), transparent 30%);
+}
+
+.login-card {
+  display: grid;
+  gap: 15px;
+  width: min(430px, 100%);
+  padding: 30px;
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+}
+
+.login-card img {
+  width: 170px;
+  margin-bottom: 6px;
+}
+
+.login-card span {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 6vw, 2.45rem);
+  letter-spacing: 0;
+}
+
+.login-card p {
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
+}
+
+.login-card label {
+  display: grid;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 800;
+}
+
+.login-card input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  padding: 12px 13px;
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.login-card input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(0, 168, 199, 0.16);
+}
+
+.login-card small {
+  min-height: 1.2em;
+  color: #ffc247;
+  font-weight: 700;
+}
+
+.ghost-button,
+.tool-actions button,
+.file-button {
+  display: inline-grid;
+  place-items: center;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  text-decoration: none;
+}
+
+.admin-actions .ghost-button {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.admin-shell {
+  display: grid;
+  grid-template-columns: 292px minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px clamp(18px, 4vw, 46px) 42px;
+}
+
+.admin-sidebar,
+.editor-panel,
+.danger-zone {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  overflow: hidden;
+}
+
+.sidebar-title {
+  padding: 18px;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--blue), #08324a);
+}
+
+.sidebar-title strong {
+  display: block;
+  font-size: 1.06rem;
+}
+
+[data-page-list] {
+  display: grid;
+  padding: 8px;
+}
+
+[data-page-list] button {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 12px;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+[data-page-list] button:hover,
+[data-page-list] button.active {
+  background: #eef6f9;
+}
+
+[data-page-list] strong {
+  font-size: 0.94rem;
+}
+
+[data-page-list] span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.editor-panel {
+  overflow: hidden;
+}
+
+.panel-heading {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: start;
+  padding: 24px;
+  color: var(--white);
+  background:
+    linear-gradient(135deg, rgba(5, 17, 31, 0.98), rgba(8, 50, 74, 0.94)),
+    radial-gradient(circle at 90% 0%, rgba(0, 168, 199, 0.34), transparent 32%);
+}
+
+.panel-heading p {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.panel-heading h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  letter-spacing: 0;
+}
+
+.panel-heading span {
+  display: block;
+  max-width: 720px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.55;
+}
+
+.language-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 6px;
+}
+
+.language-tabs button {
+  min-width: 42px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 5px;
+  color: var(--white);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.language-tabs button.active {
+  color: var(--ink);
+  background: var(--white);
+}
+
+.status-line {
+  margin: 18px 24px 0;
+  padding: 12px 14px;
+  color: #385268;
+  background: #eef6f9;
+  border-left: 4px solid var(--cyan);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.editor-form {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.field-group {
+  display: grid;
+  gap: 14px;
+}
+
+.field-group h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.editor-field {
+  display: grid;
+  gap: 8px;
+}
+
+.editor-field label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.editor-field small {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.editor-field input,
+.editor-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px 13px;
+  color: var(--ink);
+  background: #fbfdff;
+  outline: none;
+}
+
+.editor-field textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.48;
+}
+
+.editor-field input:focus,
+.editor-field textarea:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(0, 168, 199, 0.14);
+}
+
+.default-preview {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.danger-zone {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  margin: 0 24px 24px;
+  padding: 18px;
+  box-shadow: none;
+}
+
+.danger-zone strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.danger-zone p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 980px) {
+  .admin-topbar,
+  .admin-shell,
+  .panel-heading,
+  .danger-zone {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-actions,
+  .tool-actions {
+    justify-content: flex-start;
+  }
+
+  .admin-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-topbar {
+    padding: 14px 16px;
+  }
+
+  .admin-shell {
+    padding: 16px;
+  }
+
+  .admin-actions > *,
+  .tool-actions > * {
+    width: 100%;
+  }
+}
