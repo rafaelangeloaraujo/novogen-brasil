@@ -1,5 +1,3 @@
-import { redirect, requireAdmin } from "./_shared.js";
-
 const PUBLIC_ADMIN_ROUTES = new Set([
   "/admin/login",
   "/admin/hash-password"
@@ -12,7 +10,9 @@ export async function onRequest(context) {
     return context.next();
   }
 
+  const { redirect, requireAdmin } = await import("./_shared.js");
   const session = await requireAdmin(context);
+
   if (!session) {
     return redirect("/admin/login");
   }
