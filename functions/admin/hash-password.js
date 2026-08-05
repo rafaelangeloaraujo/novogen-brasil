@@ -8,45 +8,7 @@ function htmlResponse(html, init = {}) {
   });
 }
 
-function jsonResponse(data) {
-  return new Response(JSON.stringify(data), {
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store"
-    }
-  });
-}
-
-function bytesToBase64(bytes) {
-  let binary = "";
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
-}
-
-async function hashPassword(password, iterations = 210000) {
-  const salt = new Uint8Array(16);
-  crypto.getRandomValues(salt);
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
-  );
-
-  const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
-    key,
-    256
-  );
-
-  return `pbkdf2_sha256$${iterations}$${bytesToBase64(salt)}$${bytesToBase64(new Uint8Array(bits))}`;
-}
-
-function formPage(result = "") {
+function formPage() {
   return `<!doctype html>
 <html lang="pt-BR">
   <head>
@@ -58,19 +20,65 @@ function formPage(result = "") {
   </head>
   <body>
     <section class="login-screen">
-      <form class="login-card" method="post" action="/admin/hash-password">
+      <form class="login-card" data-hash-form>
         <img src="/assets/novogen-logo.png" alt="Novogen">
         <span>Configuração inicial</span>
         <h1>Gerar hash da senha</h1>
-        <p>Use esta página uma vez para gerar o valor de ADMIN_PASSWORD_HASH no Cloudflare.</p>
+        <p>O hash será gerado no seu navegador. Depois copie o resultado para ADMIN_PASSWORD_HASH.</p>
         <label>
           Senha forte
-          <input type="password" name="password" autocomplete="new-password" required autofocus>
+          <input type="password" name="password" autocomplete="new-password" required autofocus minlength="12">
         </label>
         <button class="primary-button" type="submit">Gerar hash</button>
-        ${result ? `<textarea rows="5" readonly>${result}</textarea>` : ""}
+        <textarea rows="5" readonly data-hash-output placeholder="O hash aparecerá aqui"></textarea>
+        <small data-hash-status></small>
       </form>
     </section>
+    <script>
+      const form = document.querySelector("[data-hash-form]");
+      const output = document.querySelector("[data-hash-output]");
+      const status = document.querySelector("[data-hash-status]");
+
+      const bytesToBase64 = (bytes) => {
+        let binary = "";
+        bytes.forEach((byte) => {
+          binary += String.fromCharCode(byte);
+        });
+        return btoa(binary);
+      };
+
+      const hashPassword = async (password, iterations = 50000) => {
+        const salt = new Uint8Array(16);
+        crypto.getRandomValues(salt);
+        const key = await crypto.subtle.importKey(
+          "raw",
+          new TextEncoder().encode(password),
+          "PBKDF2",
+          false,
+          ["deriveBits"]
+        );
+        const bits = await crypto.subtle.deriveBits(
+          { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+          key,
+          256
+        );
+        return \`pbkdf2_sha256$\${iterations}$\${bytesToBase64(salt)}$\${bytesToBase64(new Uint8Array(bits))}\`;
+      };
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const password = String(new FormData(form).get("password") || "");
+        if (password.length < 12) {
+          status.textContent = "Use uma senha com pelo menos 12 caracteres.";
+          return;
+        }
+        status.textContent = "Gerando hash...";
+        output.value = await hashPassword(password);
+        status.textContent = "Hash gerado. Copie o conteúdo acima.";
+        output.focus();
+        output.select();
+      });
+    </script>
   </body>
 </html>`;
 }
@@ -87,21 +95,6 @@ export async function onRequestGet({ env }) {
   return htmlResponse(formPage());
 }
 
-export async function onRequestPost({ request, env }) {
-  if (!canUseHashTool(env)) {
-    return new Response("Not found", { status: 404 });
-  }
-
-  const form = await request.formData();
-  const password = String(form.get("password") || "");
-
-  if (password.length < 12) {
-    return htmlResponse(formPage("Use uma senha com pelo menos 12 caracteres."), { status: 422 });
-  }
-
-  return htmlResponse(formPage(await hashPassword(password)));
-}
-
-export async function onRequestOptions() {
-  return jsonResponse({ ok: true });
+export async function onRequestPost() {
+  return new Response("Method not allowed", { status: 405 });
 }
