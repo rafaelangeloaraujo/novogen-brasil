@@ -120,7 +120,7 @@ export function randomToken() {
   return bytesToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-export async function hashPassword(password, iterations = 210000) {
+export async function hashPassword(password, iterations = 50000) {
   const salt = new Uint8Array(16);
   crypto.getRandomValues(salt);
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
@@ -136,7 +136,7 @@ export async function verifyPassword(password, storedHash) {
   const parts = String(storedHash || "").split("$");
   if (parts.length !== 4 || parts[0] !== "pbkdf2_sha256") return false;
   const iterations = Number(parts[1]);
-  if (!Number.isFinite(iterations) || iterations < 100000) return false;
+  if (!Number.isFinite(iterations) || iterations < 10000) return false;
 
   const salt = base64ToBytes(parts[2]);
   const expected = base64ToBytes(parts[3]);
