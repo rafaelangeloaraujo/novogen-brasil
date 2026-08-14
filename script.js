@@ -420,7 +420,8 @@ const cmsDefaults = {
     geoPlace: "Brasil",
     latitude: "-15.7801",
     longitude: "-47.9292"
-  }
+  },
+  customCode: {}
 };
 
 const localSiteUrl = "http://localhost/novogen-brasil-site/";
@@ -600,6 +601,48 @@ const applySeoOverrides = (cms) => {
   }
 };
 
+const createExecutableNode = (node) => {
+  if (node.nodeName.toLowerCase() !== "script") {
+    return node;
+  }
+
+  const script = document.createElement("script");
+  Array.from(node.attributes).forEach((attribute) => {
+    script.setAttribute(attribute.name, attribute.value);
+  });
+  script.text = node.textContent;
+  return script;
+};
+
+const injectCustomCode = (html, target, position = "append") => {
+  if (!html || !target) return;
+
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  const nodes = Array.from(template.content.childNodes);
+  const referenceNode = position === "prepend" ? target.firstChild : null;
+
+  nodes.forEach((node) => {
+    const executableNode = createExecutableNode(node);
+    if (position === "prepend") {
+      target.insertBefore(executableNode, referenceNode);
+    } else {
+      target.appendChild(executableNode);
+    }
+  });
+};
+
+const applyCustomCode = (cms) => {
+  if (window.__novogenCustomCodeApplied) return;
+
+  const customCode = { ...cmsDefaults.customCode, ...(cms.customCode || {}) };
+  window.__novogenCustomCodeApplied = true;
+
+  injectCustomCode(customCode.head, document.head);
+  injectCustomCode(customCode.bodyStart, document.body, "prepend");
+  injectCustomCode(customCode.bodyEnd, document.body);
+};
+
 const applyCmsOverrides = (lang) => {
   const cms = readCmsContent();
   const textOverrides = cms.text?.[lang] || {};
@@ -632,6 +675,7 @@ const applyCmsOverrides = (lang) => {
   }
 
   applySeoOverrides(cms);
+  applyCustomCode(cms);
 };
 
 const setHeaderState = () => {
@@ -1265,67 +1309,93 @@ if (document.querySelector("[data-hero-canvas]")) {
     ctx.stroke();
   };
 
-  const drawDnaRibbon = (centerX, centerY, halfWidth, wave, colorA, colorB, phase, lineWidth) => {
-    const steps = 72;
-    const topPoints = [];
-    const bottomPoints = [];
+  const strokeGlow = (draw, color, widthValue, blur = 18) => {
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.shadowBlur = blur;
+    ctx.shadowColor = color;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = widthValue;
+    draw();
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawDnaRibbon = (centerX, centerY, size, phase) => {
+    const steps = 120;
+    const heightScale = size * 1.08;
+    const amplitude = size * 0.22;
+    const orangePoints = [];
+    const bluePoints = [];
 
     for (let i = 0; i <= steps; i += 1) {
       const progress = i / steps;
-      const x = centerX - halfWidth + progress * halfWidth * 2;
-      const curve = Math.sin(progress * Math.PI * 2.2 + phase) * wave;
-      const y = centerY + curve;
-      const pair = centerY - curve * 0.72;
-      topPoints.push({ x, y });
-      bottomPoints.push({ x, y: pair });
+      const y = centerY - heightScale * 0.5 + progress * heightScale;
+      const twist = progress * Math.PI * 4.45 + phase;
+      const depth = 0.72 + Math.cos(twist) * 0.16;
+      const x = centerX + Math.sin(twist) * amplitude * depth;
+      const xPair = centerX + Math.sin(twist + Math.PI) * amplitude * depth;
+      orangePoints.push({ x, y, depth });
+      bluePoints.push({ x: xPair, y, depth: 1.44 - depth });
     }
 
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    const drawPath = (points) => {
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+    };
 
-    ctx.beginPath();
-    topPoints.forEach((point, index) => {
-      if (index === 0) ctx.moveTo(point.x, point.y);
-      else ctx.lineTo(point.x, point.y);
-    });
-    ctx.strokeStyle = colorA;
-    ctx.lineWidth = lineWidth;
-    ctx.stroke();
+    strokeGlow(() => drawPath(bluePoints), "rgba(0, 177, 232, 0.38)", size * 0.082, 30);
+    strokeGlow(() => drawPath(orangePoints), "rgba(255, 136, 15, 0.38)", size * 0.082, 30);
+    strokeGlow(() => drawPath(bluePoints), "rgba(0, 176, 230, 0.9)", size * 0.038, 14);
+    strokeGlow(() => drawPath(orangePoints), "rgba(255, 147, 22, 0.92)", size * 0.038, 14);
 
-    ctx.beginPath();
-    bottomPoints.forEach((point, index) => {
-      if (index === 0) ctx.moveTo(point.x, point.y);
-      else ctx.lineTo(point.x, point.y);
-    });
-    ctx.strokeStyle = colorB;
-    ctx.lineWidth = Math.max(1.2, lineWidth * 0.72);
-    ctx.stroke();
+    for (let i = 8; i < steps; i += 9) {
+      const a = orangePoints[i];
+      const b = bluePoints[i];
+      const warmFront = a.depth > b.depth;
+      const gradient = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+      gradient.addColorStop(0, warmFront ? "rgba(255, 168, 48, 0.86)" : "rgba(0, 176, 230, 0.68)");
+      gradient.addColorStop(1, warmFront ? "rgba(0, 176, 230, 0.68)" : "rgba(255, 168, 48, 0.86)");
 
-    for (let i = 4; i < steps; i += 8) {
-      const a = topPoints[i];
-      const b = bottomPoints[i];
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = Math.max(2, size * 0.012);
+      ctx.lineCap = "round";
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = warmFront ? "rgba(255, 130, 20, 0.6)" : "rgba(0, 166, 220, 0.55)";
       ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(a.x, a.y, 1.6, 0, Math.PI * 2);
-      ctx.arc(b.x, b.y, 1.25, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.32)";
-      ctx.fill();
+      ctx.shadowBlur = 0;
     }
   };
 
+  const drawOrbitalLight = (centerX, centerY, size, phase, color, offsetY, tilt) => {
+    ctx.save();
+    ctx.translate(centerX, centerY + offsetY);
+    ctx.rotate(tilt);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, size * 0.42, size * 0.12, 0, Math.PI * 1.08 + phase, Math.PI * 1.88 + phase);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1.2, size * 0.006);
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = color;
+    ctx.lineCap = "round";
+    ctx.stroke();
+    ctx.restore();
+  };
+
   const drawEggSymbol = () => {
-    const size = Math.min(width * 0.42, height * 0.7, 560);
+    const size = Math.min(width * 0.3, height * 0.55, 420);
     if (size < 120) return;
 
-    const centerX = width < 760 ? width * 0.78 : width * 0.73;
-    const centerY = height * 0.56;
-    const alpha = width < 760 ? 0.18 : 0.34;
+    const centerX = width < 760 ? width * 0.8 : width * 0.86;
+    const centerY = height * 0.58;
+    const alpha = width < 760 ? 0.22 : 0.38;
     const floatY = Math.sin(time * 0.017) * 8;
     const pulse = 1 + Math.sin(time * 0.012) * 0.012;
 
@@ -1335,11 +1405,11 @@ if (document.querySelector("[data-hero-canvas]")) {
     ctx.translate(-centerX, -centerY);
     ctx.globalAlpha = alpha;
 
-    ctx.shadowBlur = 42;
-    ctx.shadowColor = "rgba(0, 168, 199, 0.34)";
+    ctx.shadowBlur = 58;
+    ctx.shadowColor = "rgba(0, 168, 199, 0.42)";
     const baseGlow = ctx.createRadialGradient(centerX, centerY, size * 0.08, centerX, centerY, size * 0.78);
-    baseGlow.addColorStop(0, "rgba(0, 168, 199, 0.16)");
-    baseGlow.addColorStop(0.55, "rgba(0, 106, 165, 0.08)");
+    baseGlow.addColorStop(0, "rgba(0, 168, 199, 0.2)");
+    baseGlow.addColorStop(0.55, "rgba(245, 130, 32, 0.12)");
     baseGlow.addColorStop(1, "rgba(0, 106, 165, 0)");
     ctx.fillStyle = baseGlow;
     ctx.beginPath();
@@ -1349,40 +1419,56 @@ if (document.querySelector("[data-hero-canvas]")) {
 
     drawEggPath(centerX, centerY, size);
     const shellGradient = ctx.createLinearGradient(centerX - size * 0.45, centerY, centerX + size * 0.45, centerY);
-    shellGradient.addColorStop(0, "rgba(0, 88, 150, 0.08)");
-    shellGradient.addColorStop(0.48, "rgba(0, 168, 199, 0.05)");
-    shellGradient.addColorStop(1, "rgba(255, 255, 255, 0.025)");
+    shellGradient.addColorStop(0, "rgba(0, 122, 210, 0.18)");
+    shellGradient.addColorStop(0.42, "rgba(255, 255, 255, 0.045)");
+    shellGradient.addColorStop(1, "rgba(255, 134, 15, 0.16)");
     ctx.fillStyle = shellGradient;
     ctx.fill();
+
+    drawEggPath(centerX, centerY, size);
+    const rimGradient = ctx.createLinearGradient(centerX - size * 0.5, centerY, centerX + size * 0.5, centerY);
+    rimGradient.addColorStop(0, "rgba(0, 184, 255, 0.84)");
+    rimGradient.addColorStop(0.5, "rgba(255, 255, 255, 0.2)");
+    rimGradient.addColorStop(1, "rgba(255, 132, 15, 0.86)");
+    ctx.strokeStyle = rimGradient;
+    ctx.lineWidth = Math.max(1.6, size * 0.008);
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "rgba(0, 184, 255, 0.38)";
+    ctx.stroke();
+    ctx.shadowBlur = 0;
 
     ctx.save();
     drawEggPath(centerX, centerY, size);
     ctx.clip();
 
-    const ribbons = [
-      { y: -0.38, w: 0.28, wave: 0.034, width: 7 },
-      { y: -0.25, w: 0.43, wave: 0.04, width: 8 },
-      { y: -0.1, w: 0.58, wave: 0.046, width: 10 },
-      { y: 0.07, w: 0.61, wave: 0.048, width: 11 },
-      { y: 0.23, w: 0.5, wave: 0.042, width: 9 },
-      { y: 0.37, w: 0.33, wave: 0.036, width: 8 }
-    ];
+    drawOrbitalLight(centerX, centerY, size, time * 0.022, "rgba(0, 180, 245, 0.42)", -size * 0.16, -0.42);
+    drawOrbitalLight(centerX, centerY, size, time * -0.018, "rgba(255, 136, 15, 0.42)", size * 0.08, 0.38);
+    drawOrbitalLight(centerX, centerY, size, time * 0.017, "rgba(0, 180, 245, 0.28)", size * 0.28, -0.36);
 
-    ribbons.forEach((ribbon, index) => {
-      const lineY = centerY + size * ribbon.y + Math.sin(time * 0.018 + index) * 3.2;
-      const drift = Math.sin(time * 0.015 + index * 0.8) * size * 0.07;
-      const phase = time * 0.045 + index * 0.95;
-      const colorA = index % 2 === 0 ? "rgba(0, 178, 220, 0.78)" : "rgba(255, 142, 12, 0.74)";
-      const colorB = index % 2 === 0 ? "rgba(0, 92, 158, 0.7)" : "rgba(0, 186, 220, 0.68)";
-      drawDnaRibbon(centerX + drift, lineY, size * ribbon.w, size * ribbon.wave, colorA, colorB, phase, ribbon.width);
-    });
+    for (let i = 0; i < 42; i += 1) {
+      const sparklePhase = i * 1.618 + time * 0.018;
+      const radius = size * (0.08 + ((i * 37) % 100) / 100 * 0.36);
+      const x = centerX + Math.cos(sparklePhase) * radius * (i % 2 ? 0.68 : 0.92);
+      const y = centerY + Math.sin(sparklePhase * 0.78) * radius * 1.08;
+      ctx.beginPath();
+      ctx.arc(x, y, 0.7 + (i % 4) * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = i % 3 === 0 ? "rgba(255, 156, 35, 0.48)" : "rgba(0, 181, 245, 0.42)";
+      ctx.fill();
+    }
+
+    drawDnaRibbon(centerX, centerY + Math.sin(time * 0.014) * 5, size, time * 0.035);
 
     ctx.restore();
 
     drawEggPath(centerX, centerY, size);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.11)";
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.lineWidth = 1.2;
     ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(centerX - size * 0.18, centerY - size * 0.35, size * 0.12, size * 0.34, 0.46, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.13)";
+    ctx.fill();
 
     ctx.restore();
   };
