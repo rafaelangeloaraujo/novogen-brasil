@@ -7,11 +7,11 @@ const LOGIN_LOCK_SECONDS = 60 * 10;
 export function htmlResponse(html, init = {}) {
   return new Response(html, {
     status: init.status || 200,
-    headers: {
+    headers: responseHeaders({
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       ...(init.headers || {})
-    }
+    })
   });
 }
 
@@ -30,11 +30,11 @@ function responseHeaders(input = {}) {
 export function jsonResponse(data, init = {}) {
   return new Response(JSON.stringify(data), {
     status: init.status || 200,
-    headers: {
+    headers: responseHeaders({
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
       ...(init.headers || {})
-    }
+    })
   });
 }
 
@@ -205,12 +205,31 @@ export function csrfFromRequest(request) {
   return parseCookies(request)[CSRF_COOKIE] || "";
 }
 
+export function isSameOriginRequest(request) {
+  const origin = request.headers.get("Origin");
+  if (!origin) return false;
+
+  try {
+    return new URL(origin).origin === new URL(request.url).origin;
+  } catch (error) {
+    return false;
+  }
+}
+
+export function validCsrfToken(request, submittedToken, sessionToken = "") {
+  const token = String(submittedToken || "");
+  const cookieToken = csrfFromRequest(request);
+  if (!token || !cookieToken || token !== cookieToken) return false;
+  return !sessionToken || token === sessionToken;
+}
+
 export function normalizeCmsContent(content) {
   return {
     text: typeof content?.text === "object" && content.text !== null ? content.text : {},
     assets: typeof content?.assets === "object" && content.assets !== null ? content.assets : {},
     links: typeof content?.links === "object" && content.links !== null ? content.links : {},
-    seo: typeof content?.seo === "object" && content.seo !== null ? content.seo : {}
+    seo: typeof content?.seo === "object" && content.seo !== null ? content.seo : {},
+    customCode: typeof content?.customCode === "object" && content.customCode !== null ? content.customCode : {}
   };
 }
 
@@ -252,7 +271,8 @@ export async function ensureDatabase(env) {
         "link.social.instagram": "https://www.instagram.com/novogen_brasil/",
         "link.social.linkedin": "https://www.linkedin.com/company/novogen-do-brasil/"
       },
-      seo: {}
+      seo: {},
+      customCode: {}
     }))
     .run();
 

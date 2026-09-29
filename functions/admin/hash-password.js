@@ -20,7 +20,7 @@ function formPage() {
   </head>
   <body>
     <section class="login-screen">
-      <form class="login-card" data-hash-form>
+      <section class="login-card" data-hash-tool>
         <img src="/assets/novogen-logo.png" alt="Novogen">
         <span>Configuração inicial</span>
         <h1>Gerar hash da senha</h1>
@@ -29,13 +29,14 @@ function formPage() {
           Senha forte
           <input type="password" name="password" autocomplete="new-password" required autofocus minlength="12">
         </label>
-        <button class="primary-button" type="submit">Gerar hash</button>
+        <button class="primary-button" type="button" data-hash-submit>Gerar hash</button>
         <textarea rows="5" readonly data-hash-output placeholder="O hash aparecerá aqui"></textarea>
         <small data-hash-status></small>
-      </form>
+      </section>
     </section>
     <script>
-      const form = document.querySelector("[data-hash-form]");
+      const tool = document.querySelector("[data-hash-tool]");
+      const submit = document.querySelector("[data-hash-submit]");
       const output = document.querySelector("[data-hash-output]");
       const status = document.querySelector("[data-hash-status]");
 
@@ -65,9 +66,8 @@ function formPage() {
         return \`pbkdf2_sha256$\${iterations}$\${bytesToBase64(salt)}$\${bytesToBase64(new Uint8Array(bits))}\`;
       };
 
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const password = String(new FormData(form).get("password") || "");
+      submit.addEventListener("click", async () => {
+        const password = String(tool.querySelector("[name='password']").value || "");
         if (password.length < 12) {
           status.textContent = "Use uma senha com pelo menos 12 caracteres.";
           return;

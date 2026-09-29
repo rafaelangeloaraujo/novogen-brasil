@@ -1,8 +1,10 @@
 import {
   clearSessionCookies,
+  cookie,
+  csrfFromRequest,
   ensureDatabase,
   htmlResponse,
-  jsonResponse,
+  isSameOriginRequest,
   logAction,
   MAX_LOGIN_ATTEMPTS,
   LOGIN_LOCK_SECONDS,
@@ -11,10 +13,11 @@ import {
   sessionCookies,
   sessionSecret,
   signSession,
+  validCsrfToken,
   verifyPassword
 } from "./_shared.js";
 
-function loginPage(error = "") {
+function loginPage(csrfToken, error = "") {
   return `<!doctype html>
 <html lang="pt-BR">
   <head>
@@ -27,6 +30,7 @@ function loginPage(error = "") {
   <body>
     <section class="login-screen">
       <form class="login-card" method="post" action="/admin/login">
+        <input type="hidden" name="csrf_token" value="${csrfToken}">
         <img src="/assets/novogen-logo.png" alt="Novogen">
         <span>Painel interno</span>
         <h1>Acesso administrativo</h1>
@@ -48,14 +52,28 @@ function loginPage(error = "") {
 }
 
 export async function onRequestGet() {
-  return htmlResponse(loginPage());
+  const csrfToken = randomToken();
+  return htmlResponse(loginPage(csrfToken), {
+    headers: {
+      "Set-Cookie": cookie("novogen_csrf", csrfToken, { maxAge: 60 * 15 })
+    }
+  });
 }
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+  if (!isSameOriginRequest(request)) {
+    return htmlResponse(loginPage("", "Origem da solicitação inválida."), { status: 403 });
+  }
+
   await ensureDatabase(env);
 
   const form = await request.formData();
+  const submittedCsrf = String(form.get("csrf_token") || "");
+  if (!validCsrfToken(request, submittedCsrf)) {
+    return htmlResponse(loginPage("", "Sessão do formulário expirada. Recarregue a página."), { status: 403 });
+  }
+
   const username = String(form.get("username") || "").trim();
   const password = String(form.get("password") || "");
 
@@ -65,12 +83,12 @@ export async function onRequestPost(context) {
 
   if (!admin) {
     await logAction(env, request, username, "login_failed_unknown_user");
-    return htmlResponse(loginPage("Usuário ou senha inválidos."), { status: 401 });
+    return htmlResponse(loginPage(csrfFromRequest(request), "Usuário ou senha inválidos."), { status: 401 });
   }
 
   if (admin.locked_until && new Date(admin.locked_until).getTime() > Date.now()) {
     await logAction(env, request, username, "login_blocked_locked");
-    return htmlResponse(loginPage("Muitas tentativas. Tente novamente em alguns minutos."), { status: 429 });
+    return htmlResponse(loginPage(csrfFromRequest(request), "Muitas tentativas. Tente novamente em alguns minutos."), { status: 429 });
   }
 
   const valid = await verifyPassword(password, admin.password_hash);
@@ -87,7 +105,7 @@ export async function onRequestPost(context) {
       .run();
     await logAction(env, request, username, "login_failed", { attempts, locked: Boolean(lockedUntil) });
 
-    return htmlResponse(loginPage("Usuário ou senha inválidos."), { status: 401 });
+    return htmlResponse(loginPage(csrfFromRequest(request), "Usuário ou senha inválidos."), { status: 401 });
   }
 
   await env.DB.prepare(`UPDATE admins
@@ -111,5 +129,8 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestOptions() {
-  return jsonResponse({ ok: true });
+  return new Response(null, {
+    status: 405,
+    headers: { Allow: "GET, POST" }
+  });
 }

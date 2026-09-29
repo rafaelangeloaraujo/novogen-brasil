@@ -7,7 +7,19 @@ function htmlResponse(html) {
   });
 }
 
-export async function onRequestGet() {
+export async function onRequestGet(context) {
+  const { requireAdmin } = await import("./_shared.js");
+  const session = await requireAdmin(context);
+  if (!session) {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/admin/login",
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
   return htmlResponse(`<!doctype html>
 <html lang="pt-BR">
   <head>
@@ -29,7 +41,10 @@ export async function onRequestGet() {
         </div>
         <nav class="admin-actions" aria-label="Ações do painel">
           <a class="ghost-button" href="/index.html" target="_blank" rel="noreferrer">Ver site</a>
-          <a class="ghost-button" href="/admin/logout">Sair</a>
+          <form class="logout-form" method="post" action="/admin/logout">
+            <input type="hidden" name="csrf_token" value="${session.csrf}">
+            <button class="ghost-button" type="submit">Sair</button>
+          </form>
           <button class="primary-button" type="button" data-save>Salvar alterações</button>
         </nav>
       </header>
@@ -58,7 +73,7 @@ export async function onRequestGet() {
           </div>
 
           <div class="status-line" data-status>Alterações ficam salvas no banco de dados e aparecem no site ao abrir ou recarregar.</div>
-          <form class="editor-form" data-editor-form></form>
+          <div class="editor-form" data-editor-form></div>
 
           <div class="danger-zone">
             <div>

@@ -1,6 +1,7 @@
 import {
   csrfFromRequest,
   ensureDatabase,
+  isSameOriginRequest,
   jsonResponse,
   logAction,
   normalizeCmsContent,
@@ -28,6 +29,10 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+  if (!isSameOriginRequest(request)) {
+    return jsonResponse({ ok: false, error: "invalid_origin" }, { status: 403 });
+  }
+
   await ensureDatabase(env);
 
   const session = await requireAdmin(context);
