@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Painel interno | Novogen Brasil</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="/admin.css">
+  </head>
+  <body data-base-path="/" data-api-path="/admin/api">
+    <div class="admin-app">
+      <header class="admin-topbar">
+        <a class="admin-brand" href="/index.html" aria-label="Voltar ao site">
+          <img src="/assets/novogen-logo.png" alt="Novogen">
+        </a>
+        <div>
+          <span>Painel interno</span>
+          <strong>Conteúdo do site</strong>
+        </div>
+        <nav class="admin-actions" aria-label="Ações do painel">
+          <a class="ghost-button" href="/index.html" target="_blank" rel="noreferrer">Ver site</a>
+          <button class="ghost-button" type="button" disabled>Sair</button>
+          <button class="primary-button" type="button" data-save>Salvar alterações</button>
+        </nav>
+      </header>
+
+      <main class="admin-shell">
+        <aside class="admin-sidebar">
+          <div class="sidebar-title">
+            <span>Organização</span>
+            <strong>Páginas e seções</strong>
+          </div>
+          <nav data-page-list aria-label="Seções editáveis"></nav>
+        </aside>
+
+        <section class="editor-panel">
+          <div class="panel-heading">
+            <div>
+              <p data-section-eyebrow>Site Novogen</p>
+              <h1 data-section-title>Carregando painel...</h1>
+              <span data-section-description></span>
+            </div>
+            <div class="language-tabs" aria-label="Idioma">
+              <button class="active" type="button" data-editor-lang="pt">PT</button>
+              <button type="button" data-editor-lang="en">EN</button>
+              <button type="button" data-editor-lang="es">ES</button>
+            </div>
+          </div>
+
+          <div class="status-line" data-status>Alterações ficam salvas no banco de dados e aparecem no site ao abrir ou recarregar.</div>
+
+          <div class="editor-form" data-editor-form></div>
+
+          <div class="danger-zone">
+            <div>
+              <strong>Ferramentas</strong>
+              <p>Use exportar/importar para transportar conteúdo entre ambientes ou preservar uma versão.</p>
+            </div>
+            <div class="tool-actions">
+              <button type="button" data-clear-section>Limpar seção</button>
+              <button type="button" data-export>Exportar JSON</button>
+              <label class="file-button">
+                Importar JSON
+                <input type="file" accept="application/json" data-import>
+              </label>
+              <button type="button" data-clear-all>Limpar tudo</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/admin.js"></script>
+  </body>
+</html>
