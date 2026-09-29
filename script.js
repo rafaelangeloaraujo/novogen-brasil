@@ -610,6 +610,10 @@ const createExecutableNode = (node) => {
   Array.from(node.attributes).forEach((attribute) => {
     script.setAttribute(attribute.name, attribute.value);
   });
+  const applicationScript = document.querySelector("script[src*='script.js']");
+  if (!script.nonce && applicationScript?.nonce) {
+    script.nonce = applicationScript.nonce;
+  }
   script.text = node.textContent;
   return script;
 };

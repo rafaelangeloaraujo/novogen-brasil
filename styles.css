@@ -1188,7 +1188,7 @@ article p {
   color: rgba(255, 255, 255, 0.76);
 }
 
-form {
+.contact-form {
   display: grid;
   gap: 16px;
 }

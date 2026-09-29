@@ -1,6 +1,9 @@
 /admin /admin/login 302
 /admin/ /admin/login 302
+/admin.html /admin/login 302
 /admin/login.php /admin/login 301
 /admin/index.php /admin/index.html 301
 /admin/logout.php /admin/logout 301
 /admin/api.php /admin/api 301
+/novocenter-artigo /novocenter-artigo-1079292.html 302
+/novocenter-artigo.html /novocenter-artigo-1079292.html 302
