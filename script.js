@@ -859,6 +859,44 @@ const initRepresentativesPage = () => {
 
 initRepresentativesPage();
 
+const contactForm = document.getElementById("contact-form");
+if (contactForm) {
+  let sendingContact = false;
+  contactForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (sendingContact || !contactForm.reportValidity()) return;
+    const button = contactForm.querySelector('button[type="submit"]');
+    const status = document.getElementById("contact-status");
+    const messages = {
+      pt: { sending: "Enviando mensagem…", success: "Mensagem enviada! Nossa equipe entrará em contato.", error: "Não foi possível enviar. Tente novamente ou escreva para garaujo@novogen.com.br." },
+      en: { sending: "Sending message…", success: "Message sent! Our team will contact you.", error: "Unable to send. Try again or email garaujo@novogen.com.br." },
+      es: { sending: "Enviando mensaje…", success: "¡Mensaje enviado! Nuestro equipo se pondrá en contacto.", error: "No se pudo enviar. Intente nuevamente o escriba a garaujo@novogen.com.br." }
+    };
+    const copy = messages[document.documentElement.lang.slice(0, 2)] || messages.pt;
+    sendingContact = true;
+    button.disabled = true;
+    status.hidden = false;
+    status.textContent = copy.sending;
+    try {
+      const response = await fetch(contactForm.action, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.fromEntries(new FormData(contactForm))),
+        signal: AbortSignal.timeout(25000)
+      });
+      const result = await response.json();
+      if (!response.ok || result.ok !== true) throw new Error("Contact send failed");
+      contactForm.reset();
+      status.textContent = copy.success;
+    } catch {
+      status.textContent = copy.error;
+    } finally {
+      sendingContact = false;
+      button.disabled = false;
+    }
+  });
+}
+
 const formatCurrencyBRL = (value, digits = 4) => {
   const number = Number(String(value || "").replace(",", "."));
   if (!Number.isFinite(number)) return "--";

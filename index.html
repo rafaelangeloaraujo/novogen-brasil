@@ -377,14 +377,14 @@
           <h2 data-i18n="contact.title">Converse com a equipe Novogen Brasil.</h2>
           <p data-i18n="contact.copy">Entre em contato para discutir sistema de produção, condições locais, objetivos do lote e informações técnicas sobre as linhagens.</p>
         </div>
-        <div class="contact-form">
+        <form class="contact-form" id="contact-form" action="/api/contact" method="post">
           <label>
             <span data-i18n="contact.name">Nome</span>
-            <input type="text" name="name" autocomplete="name">
+            <input type="text" name="name" autocomplete="name" required maxlength="120">
           </label>
           <label>
             <span data-i18n="contact.email">E-mail</span>
-            <input type="email" name="email" autocomplete="email">
+            <input type="email" name="email" autocomplete="email" required maxlength="254">
           </label>
           <label>
             <span data-i18n="contact.department">Quero falar com</span>
@@ -398,10 +398,12 @@
           </label>
           <label>
             <span data-i18n="contact.message">Mensagem</span>
-            <textarea name="message" rows="4"></textarea>
+            <textarea name="message" rows="4" required maxlength="5000"></textarea>
           </label>
-          <button class="btn primary" type="button" data-i18n="contact.submit">Enviar mensagem</button>
-        </div>
+          <div hidden aria-hidden="true"><label>Website<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+          <button class="btn primary" type="submit" data-i18n="contact.submit">Enviar mensagem</button>
+          <p id="contact-status" role="status" aria-live="polite" hidden></p>
+        </form>
       </section>
 <section class="section news" id="faq">
         <div class="section-heading">
